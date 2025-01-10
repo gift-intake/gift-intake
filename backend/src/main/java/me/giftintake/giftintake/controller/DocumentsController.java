@@ -1,9 +1,12 @@
 package me.giftintake.giftintake.controller;
 
+import me.giftintake.giftintake.service.DocumentService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.print.Doc;
 import java.util.UUID;
 
 /**
@@ -13,6 +16,13 @@ import java.util.UUID;
 @RequestMapping("/api/documents")
 public final class DocumentsController {
 
+    private final DocumentService documentService;
+
+    @Autowired
+    public DocumentsController(DocumentService documentService) {
+        this.documentService = documentService;
+    }
+
     /**
      * Uploads a document to the server to be processed
      * @param file the document to upload
@@ -20,6 +30,7 @@ public final class DocumentsController {
      */
     @PostMapping
     public ResponseEntity<Void> uploadDocument(@RequestParam("file") MultipartFile file) {
+        documentService.uploadDocument(file);
         return ResponseEntity.ok().build();
     }
 
