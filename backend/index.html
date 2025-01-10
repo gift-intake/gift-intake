@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Upload File</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      src="https://code.jquery.com/jquery-3.7.1.slim.js"
+      integrity="sha256-UgvvN8vBkgO0luPSUl2s8TIlOSYRoGFAX4jlCIm9Adc="
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body class="bg-gray-100 h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+      <div
+        id="drop-zone"
+        class="border-4 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors cursor-pointer bg-white"
+      >
+        <div class="mb-4">
+          <svg
+            class="mx-auto h-12 w-12 text-gray-400"
+            stroke="currentColor"
+            fill="none"
+            viewBox="0 0 48 48"
+            aria-hidden="true"
+          >
+            <path
+              d="M24 8l12 12m-12-12l-12 12m12-12v24"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </div>
+        <p class="text-gray-600 mb-2">Drag and drop your file here</p>
+        <p class="text-sm text-gray-500">or</p>
+        <input type="file" id="file-input" class="hidden" />
+        <button
+          onclick="document.getElementById('file-input').click()"
+          class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+        >
+          Browse Files
+        </button>
+      </div>
+      <div id="file-info" class="mt-4 p-4 bg-white rounded-lg hidden">
+        <p class="text-gray-700">
+          Selected file: <span id="file-name" class="font-medium"></span>
+        </p>
+        <button
+          id="upload-button"
+          class="mt-2 w-full px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+        >
+          Upload File
+        </button>
+      </div>
+      <div id="upload-status" class="mt-4 p-4 rounded-lg hidden"></div>
+    </div>
+
+    <script>
+      const dropZone = document.getElementById("drop-zone");
+      const fileInput = document.getElementById("file-input");
+      const fileInfo = document.getElementById("file-info");
+      const fileName = document.getElementById("file-name");
+      const uploadButton = document.getElementById("upload-button");
+      const uploadStatus = document.getElementById("upload-status");
+      let selectedFile = null;
+
+      // Prevent default drag behaviors
+      ["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+      });
+
+      function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      // Highlight drop zone when item is dragged over it
+      ["dragenter", "dragover"].forEach((eventName) => {
+        dropZone.addEventListener(eventName, highlight, false);
+      });
+
+      ["dragleave", "drop"].forEach((eventName) => {
+        dropZone.addEventListener(eventName, unhighlight, false);
+      });
+
+      function highlight(e) {
+        dropZone.classList.add("border-blue-500");
+      }
+
+      function unhighlight(e) {
+        dropZone.classList.remove("border-blue-500");
+      }
+
+      // Handle dropped files
+      dropZone.addEventListener("drop", handleDrop, false);
+      fileInput.addEventListener("change", handleFileSelect, false);
+
+      function handleDrop(e) {
+        const dt = e.dataTransfer;
+        selectedFile = dt.files[0];
+        handleFile(selectedFile);
+      }
+
+      function handleFileSelect(e) {
+        selectedFile = e.target.files[0];
+        handleFile(selectedFile);
+      }
+
+      function handleFile(file) {
+        if (file) {
+          console.log("File selected:", file.name);
+          fileName.textContent = file.name;
+          fileInfo.classList.remove("hidden");
+          uploadStatus.classList.add("hidden");
+        }
+      }
+
+      // Add click event listener to upload button
+      uploadButton.addEventListener("click", function () {
+        console.log("Upload button clicked");
+        uploadFile();
+      });
+
+      async function uploadFile() {
+        if (!selectedFile) {
+          console.log("No file selected");
+          uploadStatus.innerHTML =
+            '<p class="text-red-500">Please select a file first.</p>';
+          uploadStatus.classList.remove("hidden");
+          return;
+        }
+
+        console.log("Starting upload for file:", selectedFile.name);
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+
+        try {
+          uploadStatus.innerHTML = '<p class="text-blue-500">Uploading...</p>';
+          uploadStatus.classList.remove("hidden");
+
+          console.log("Sending request to server...");
+          const response = await fetch("http://localhost:8080/api/documents", {
+            method: "POST",
+            body: formData,
+          });
+
+          console.log("Server response:", response);
+
+          if (response.ok) {
+            console.log("Upload successful");
+            uploadStatus.innerHTML =
+              '<p class="text-green-500">File uploaded successfully!</p>';
+            fileInfo.classList.add("hidden");
+            fileInput.value = "";
+            selectedFile = null;
+          } else {
+            throw new Error(`Upload failed with status: ${response.status}`);
+          }
+        } catch (error) {
+          console.error("Upload error:", error);
+          uploadStatus.innerHTML = `<p class="text-red-500">Upload failed: ${error.message}</p>`;
+        }
+      }
+    </script>
+  </body>
+</html>
