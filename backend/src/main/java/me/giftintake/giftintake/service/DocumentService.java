@@ -7,6 +7,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -20,7 +21,7 @@ public final class DocumentService {
             throw new IllegalArgumentException("File is empty");
         }
 
-        try (var inputStream = file.getInputStream()) {
+        try (InputStream inputStream = file.getInputStream()) {
             MAPIMessage message = new MAPIMessage(inputStream);
 
             String body = message.getTextBody();
