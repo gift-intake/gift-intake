@@ -6,8 +6,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class GiftintakeApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(GiftintakeApplication.class, args);
-	}
+  public static void main(String[] args) {
+    SpringApplication.run(GiftintakeApplication.class, args);
+  }
 
 }

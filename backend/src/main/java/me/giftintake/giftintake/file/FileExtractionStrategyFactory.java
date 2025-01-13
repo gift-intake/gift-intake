@@ -1,9 +1,8 @@
 package me.giftintake.giftintake.file;
 
+import java.io.File;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.io.File;
 
 @Component
 public class FileExtractionStrategyFactory {
