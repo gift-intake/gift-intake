@@ -24,6 +24,7 @@ dependencies {
 	implementation("org.apache.poi:poi:5.4.0")
 	implementation("org.apache.poi:poi-scratchpad:5.4.0")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+	implementation("net.sourceforge.tess4j:tess4j:5.13.0")
 }
 
 tasks.withType<Test> {
