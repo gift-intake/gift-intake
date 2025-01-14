@@ -5,6 +5,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import me.giftintake.giftintake.file.FileExtractionStrategy;
 import me.giftintake.giftintake.file.FileExtractionStrategyFactory;
 import me.giftintake.giftintake.model.FileExtractionRecord;
 import me.giftintake.giftintake.model.OutlookEmail;
@@ -26,6 +28,13 @@ public final class DocumentService {
     this.factory = factory;
   }
 
+  /**
+   * Saves the incoming email file and attachments to a temporary location and returns a list of
+   * {@link FileExtractionRecord} objects.
+   *
+   * @param file The email file to be processed
+   * @return A list of {@link FileExtractionRecord} objects representing the files to be processed.
+   */
   public List<FileExtractionRecord> uploadDocument(@NonNull MultipartFile file) {
     if (file.isEmpty()) {
       throw new IllegalArgumentException("File is empty");
@@ -73,7 +82,30 @@ public final class DocumentService {
   }
 
 
-  public @NonNull List<FileExtractionRecord> extractText(@NonNull OutlookEmail email) {
-    return List.of();
+  public @NonNull OutlookEmail extractText(@NonNull List<FileExtractionRecord> records) {
+    var attachments = records
+        .stream()
+        .filter(fileExtractionRecord -> !fileExtractionRecord.extension().equals(".msg"))
+        .map(fileExtractionRecord -> {
+          var extractor = factory.getStrategy(fileExtractionRecord.extension());
+          var extractedText = extractor.extractText(fileExtractionRecord.file().toFile());
+          fileExtractionRecord.file().toFile().delete();
+          return new OutlookEmail.Attachment(
+              fileExtractionRecord.name(),
+              fileExtractionRecord.extension(),
+              extractedText
+          );
+        }).toList();
+    return records
+        .stream()
+        .filter(fileExtractionRecord -> fileExtractionRecord.extension().equals(".msg"))
+        .findFirst()
+        .map(fileExtractionRecord -> {
+          var extractor = factory.getStrategy(fileExtractionRecord.extension());
+          var extractedText = extractor.extractText(fileExtractionRecord.file().toFile());
+          fileExtractionRecord.file().toFile().delete();
+          return new OutlookEmail(extractedText, attachments);
+        })
+        .orElseThrow(() -> new IllegalArgumentException("No email file found"));
   }
 }

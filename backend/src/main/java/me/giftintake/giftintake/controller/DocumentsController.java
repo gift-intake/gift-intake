@@ -39,11 +39,8 @@ public final class DocumentsController {
   public ResponseEntity<Void> uploadDocument(@RequestParam("file") MultipartFile file) {
     var results = documentService.uploadDocument(file);
 
-    results.forEach(result -> {
-      var strategy = factory.getStrategy(result.extension());
-      var text = strategy.extractText(result.file().toFile());
-      System.out.println(result.file() + ":\n" + text);
-    });
+    var email = documentService.extractText(results);
+    System.out.println(email);
 
     return ResponseEntity.ok().build();
   }
