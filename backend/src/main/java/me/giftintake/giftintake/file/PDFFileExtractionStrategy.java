@@ -1,15 +1,28 @@
 package me.giftintake.giftintake.file;
 
-import java.io.File;
-import org.springframework.lang.NonNull;
-import org.springframework.stereotype.Component;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 
-@Component
+import java.io.File;
+import java.io.IOException;
+
+
 public class PDFFileExtractionStrategy implements FileExtractionStrategy {
 
-  @Override
-  public @NonNull String extractText(@NonNull File file) {
-    return "";
-  }
+  public static String extractTextFromPDF(String filePath) throws IOException {
+        // Load the PDF document
+        PDDocument document = PDDocument.load(new File(filePath));
+
+        // Create a PDFTextStripper to extract text
+        PDFTextStripper pdfStripper = new PDFTextStripper();
+
+        // Extract the text
+        String text = pdfStripper.getText(document);
+
+        // Close the document to release resources
+        document.close();
+
+        return text;
+    }
 
 }
