@@ -36,11 +36,12 @@ public final class DocumentService {
     try (InputStream inputStream = file.getInputStream()) {
       Path emailTempFile = Files.createTempFile(file.getName().replaceAll(FILE_REGEX, "_"),
           ".msg");
+      Files.write(emailTempFile, file.getBytes());
       emailTempFile.toFile().deleteOnExit();
 
       attachments.add(new FileExtractionRecord(
           file.getOriginalFilename(),
-          file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf(".") + 1),
+          ".msg",
           emailTempFile
       ));
 
@@ -52,9 +53,9 @@ public final class DocumentService {
 
         Path tempFile = Files.createTempFile(
             attachmentName.replaceAll(FILE_REGEX, "_"),
-            ".tmp"
+            extension
         );
-
+        System.out.println("Created temp file: " + tempFile);
         tempFile.toFile().deleteOnExit();
 
         Files.write(tempFile, attachment.getAttachData().getValue());

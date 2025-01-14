@@ -1,6 +1,7 @@
 package me.giftintake.giftintake.controller;
 
 import java.util.UUID;
+import me.giftintake.giftintake.file.FileExtractionStrategyFactory;
 import me.giftintake.giftintake.service.DocumentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -19,10 +20,13 @@ import org.springframework.web.multipart.MultipartFile;
 public final class DocumentsController {
 
   private final DocumentService documentService;
+  private final FileExtractionStrategyFactory factory;
 
   @Autowired
-  public DocumentsController(DocumentService documentService) {
+  public DocumentsController(DocumentService documentService,
+      FileExtractionStrategyFactory factory) {
     this.documentService = documentService;
+    this.factory = factory;
   }
 
   /**
@@ -33,7 +37,14 @@ public final class DocumentsController {
    */
   @PostMapping
   public ResponseEntity<Void> uploadDocument(@RequestParam("file") MultipartFile file) {
-    documentService.uploadDocument(file);
+    var results = documentService.uploadDocument(file);
+
+    results.forEach(result -> {
+      var strategy = factory.getStrategy(result.extension());
+      var text = strategy.extractText(result.file().toFile());
+      System.out.println(result.file() + ":\n" + text);
+    });
+
     return ResponseEntity.ok().build();
   }
 

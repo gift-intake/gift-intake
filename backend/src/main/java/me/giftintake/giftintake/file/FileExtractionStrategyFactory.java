@@ -8,23 +8,27 @@ public class FileExtractionStrategyFactory {
 
   private final ImageFileExtractionStrategy imageFileExtractionStrategy;
   private final PDFFileExtractionStrategy pdfFileExtractionStrategy;
+  private final OutlookFileExtractionStrategyFactory outlookEmailFileExtractionStrategy;
+  private final WordFileExtractionStrategy wordFileExtractionStrategy;
 
   @Autowired
   public FileExtractionStrategyFactory(ImageFileExtractionStrategy imageFileExtractionStrategy,
-      PDFFileExtractionStrategy pdfFileExtractionStrategy) {
+      PDFFileExtractionStrategy pdfFileExtractionStrategy,
+      OutlookFileExtractionStrategyFactory outlookEmailFileExtractionStrategy,
+      WordFileExtractionStrategy wordFileExtractionStrategy) {
     this.imageFileExtractionStrategy = imageFileExtractionStrategy;
     this.pdfFileExtractionStrategy = pdfFileExtractionStrategy;
+    this.outlookEmailFileExtractionStrategy = outlookEmailFileExtractionStrategy;
+    this.wordFileExtractionStrategy = wordFileExtractionStrategy;
   }
 
   public FileExtractionStrategy getStrategy(String extension) {
-    if (extension.equals(".pdf")) {
-      return this.pdfFileExtractionStrategy;
-    } else if (extension.equals(".png") || extension.equals(".jpg")) {
-      return this.imageFileExtractionStrategy;
-    } else if (extension.equals(".docx")) {
-      throw new UnsupportedOperationException("Word documents are not currently supported");
-    } else {
-      throw new IllegalArgumentException("Unsupported file type");
-    }
+    return switch (extension) {
+      case ".pdf" -> this.pdfFileExtractionStrategy;
+      case ".png", ".jpg" -> this.imageFileExtractionStrategy;
+      case ".docx" -> this.wordFileExtractionStrategy;
+      case ".msg" -> this.outlookEmailFileExtractionStrategy;
+      default -> throw new IllegalArgumentException("Unsupported file type " + extension);
+    };
   }
 }

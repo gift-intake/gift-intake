@@ -24,7 +24,8 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	implementation("org.apache.poi:poi:5.4.0")
 	implementation("org.apache.poi:poi-scratchpad:5.4.0")
-	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    implementation("org.apache.poi:poi-ooxml:5.4.0")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	implementation("net.sourceforge.tess4j:tess4j:5.13.0")
 }
 
