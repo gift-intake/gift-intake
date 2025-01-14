@@ -8,13 +8,13 @@ public class FileExtractionStrategyFactory {
 
   private final ImageFileExtractionStrategy imageFileExtractionStrategy;
   private final PDFFileExtractionStrategy pdfFileExtractionStrategy;
-  private final OutlookFileExtractionStrategyFactory outlookEmailFileExtractionStrategy;
+  private final OutlookFileExtractionStrategy outlookEmailFileExtractionStrategy;
   private final WordFileExtractionStrategy wordFileExtractionStrategy;
 
   @Autowired
   public FileExtractionStrategyFactory(ImageFileExtractionStrategy imageFileExtractionStrategy,
       PDFFileExtractionStrategy pdfFileExtractionStrategy,
-      OutlookFileExtractionStrategyFactory outlookEmailFileExtractionStrategy,
+      OutlookFileExtractionStrategy outlookEmailFileExtractionStrategy,
       WordFileExtractionStrategy wordFileExtractionStrategy) {
     this.imageFileExtractionStrategy = imageFileExtractionStrategy;
     this.pdfFileExtractionStrategy = pdfFileExtractionStrategy;

@@ -8,7 +8,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 @Component
-public class OutlookFileExtractionStrategyFactory implements FileExtractionStrategy {
+public class OutlookFileExtractionStrategy implements FileExtractionStrategy {
 
   @Override
   public @NonNull String extractText(@NonNull File file) {
