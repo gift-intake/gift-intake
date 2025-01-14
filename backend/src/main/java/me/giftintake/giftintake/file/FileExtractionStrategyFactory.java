@@ -1,6 +1,5 @@
 package me.giftintake.giftintake.file;
 
-import java.io.File;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -17,13 +16,12 @@ public class FileExtractionStrategyFactory {
     this.pdfFileExtractionStrategy = pdfFileExtractionStrategy;
   }
 
-  public FileExtractionStrategy getStrategy(File file) {
-    String fileName = file.getName();
-    if (fileName.contains(".pdf")) {
+  public FileExtractionStrategy getStrategy(String extension) {
+    if (extension.equals(".pdf")) {
       return this.pdfFileExtractionStrategy;
-    } else if (fileName.contains(".png") || fileName.contains(".jpg")) {
+    } else if (extension.equals(".png") || extension.equals(".jpg")) {
       return this.imageFileExtractionStrategy;
-    } else if (fileName.contains(".docx")) {
+    } else if (extension.equals(".docx")) {
       throw new UnsupportedOperationException("Word documents are not currently supported");
     } else {
       throw new IllegalArgumentException("Unsupported file type");

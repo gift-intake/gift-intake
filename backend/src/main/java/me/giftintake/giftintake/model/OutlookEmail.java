@@ -1,8 +1,10 @@
 package me.giftintake.giftintake.model;
 
-import java.nio.file.Path;
 import java.util.List;
 
-public record OutlookEmail(String body, List<Path> attachments) {
+public record OutlookEmail(String body, List<Attachment> attachments) {
 
+  public record Attachment(String name, String extension, String content) {
+
+  }
 }
