@@ -3,7 +3,7 @@ package me.giftintake.giftintake.file;
 import java.io.File;
 import org.springframework.lang.NonNull;
 
-public interface FileExtractionStrategy {
+public interface TextExtractionStrategy {
 
   /**
    * Extracts text from a file.

@@ -5,9 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import me.giftintake.giftintake.file.FileExtractionStrategy;
-import me.giftintake.giftintake.file.FileExtractionStrategyFactory;
+import me.giftintake.giftintake.file.TextExtractionStrategyFactory;
 import me.giftintake.giftintake.model.FileExtractionRecord;
 import me.giftintake.giftintake.model.OutlookEmail;
 import org.apache.poi.hsmf.MAPIMessage;
@@ -21,10 +19,10 @@ import org.springframework.web.multipart.MultipartFile;
 public final class DocumentService {
 
   private static final String FILE_REGEX = "[^a-zA-Z0-9.-]";
-  private final FileExtractionStrategyFactory factory;
+  private final TextExtractionStrategyFactory factory;
 
   @Autowired
-  public DocumentService(FileExtractionStrategyFactory factory) {
+  public DocumentService(TextExtractionStrategyFactory factory) {
     this.factory = factory;
   }
 
@@ -40,10 +38,10 @@ public final class DocumentService {
       throw new IllegalArgumentException("File is empty");
     }
 
-    ArrayList<FileExtractionRecord> attachments = new ArrayList<>();
+    var attachments = new ArrayList<FileExtractionRecord>();
 
-    try (InputStream inputStream = file.getInputStream()) {
-      Path emailTempFile = Files.createTempFile(file.getName().replaceAll(FILE_REGEX, "_"),
+    try (var inputStream = file.getInputStream()) {
+      var emailTempFile = Files.createTempFile(file.getName().replaceAll(FILE_REGEX, "_"),
           ".msg");
       Files.write(emailTempFile, file.getBytes());
       emailTempFile.toFile().deleteOnExit();
@@ -54,17 +52,16 @@ public final class DocumentService {
           emailTempFile
       ));
 
-      MAPIMessage message = new MAPIMessage(inputStream);
+      var message = new MAPIMessage(inputStream);
 
-      for (AttachmentChunks attachment : message.getAttachmentFiles()) {
-        String attachmentName = attachment.getAttachFileName().getValue();
-        String extension = attachment.getAttachExtension().getValue();
+      for (var attachment : message.getAttachmentFiles()) {
+        var attachmentName = attachment.getAttachFileName().getValue();
+        var extension = attachment.getAttachExtension().getValue();
 
-        Path tempFile = Files.createTempFile(
+        var tempFile = Files.createTempFile(
             attachmentName.replaceAll(FILE_REGEX, "_"),
             extension
         );
-        System.out.println("Created temp file: " + tempFile);
         tempFile.toFile().deleteOnExit();
 
         Files.write(tempFile, attachment.getAttachData().getValue());
@@ -81,7 +78,13 @@ public final class DocumentService {
     }
   }
 
-
+  /**
+   * Extracts the text from the email file and attachments.
+   *
+   * @param records The list of {@link FileExtractionRecord} objects representing the files to be
+   *                processed.
+   * @return An {@link OutlookEmail} object representing the email and attachments.
+   */
   public @NonNull OutlookEmail extractText(@NonNull List<FileExtractionRecord> records) {
     var attachments = records
         .stream()

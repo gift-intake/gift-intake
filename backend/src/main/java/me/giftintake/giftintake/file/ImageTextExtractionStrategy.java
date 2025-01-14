@@ -5,13 +5,15 @@ import net.sourceforge.tess4j.Tesseract;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
+/**
+ * Uses the Tesseract library to extract text from an image file.
+ */
 @Component
-public class ImageFileExtractionStrategy implements FileExtractionStrategy {
+public class ImageTextExtractionStrategy implements TextExtractionStrategy {
 
   @Override
   public @NonNull String extractText(@NonNull File file) {
-
-    Tesseract tesseract = new Tesseract();
+    var tesseract = new Tesseract();
     try {
       return tesseract.doOCR(file);
     } catch (Exception e) {

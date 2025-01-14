@@ -8,18 +8,19 @@ import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
+/**
+ * Uses the Apache POI library to extract text from a Word document.
+ */
 @Component
-public class WordFileExtractionStrategy implements FileExtractionStrategy {
+public class WordTextExtractionStrategy implements TextExtractionStrategy {
 
   @Override
   public @NonNull String extractText(@NonNull File file) {
-    try (XWPFDocument document = new XWPFDocument(new FileInputStream(file))) {
-      XWPFWordExtractor extractor = new XWPFWordExtractor(document);
+    try (var document = new XWPFDocument(new FileInputStream(file))) {
+      var extractor = new XWPFWordExtractor(document);
       return extractor.getText();
     } catch (IOException e) {
       throw new RuntimeException(e);
-
     }
   }
-
 }
