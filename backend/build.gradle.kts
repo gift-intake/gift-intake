@@ -20,6 +20,7 @@ repositories {
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-mail")
 	implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation ("org.apache.pdfbox:pdfbox:2.0.32")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	implementation("org.apache.poi:poi:5.4.0")
 	implementation("org.apache.poi:poi-scratchpad:5.4.0")
