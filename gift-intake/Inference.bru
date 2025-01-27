@@ -1,0 +1,29 @@
+meta {
+  name: Inference
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://127.0.0.1:8000/inference
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "text": [
+      "The subscription is billed annually, starting from January 1, 2025, and costs $120 per year.",
+      "Pay $50 every two weeks for the gym membership starting February 15, 2025.",
+      "The project is due in 3 months, and the budget is set at $10,000.",
+      "The service charge is $25 per month, with the first payment on March 1, 2025.",
+      "The annual report is released quarterly, and production costs $2,000 per quarter.",
+      "Payments of $15 are collected weekly, starting April 10, 2025.",
+      "The license renewal happens every year on December 31 and costs $500.",
+      "The concert series takes place every weekend in June, with tickets costing $75 each.",
+      "The fundraiser is held biannually, with donations ranging from $100 to $1,000.",
+      "The training program spans six weeks, starting May 15, 2025, with a fee of $300."
+    ]
+  }
+  
+}
