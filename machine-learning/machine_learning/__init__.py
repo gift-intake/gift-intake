@@ -2,25 +2,27 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from gliner import GLiNER
 from typing import List
+from ollama import chat
 
 model = GLiNER.from_pretrained("urchade/gliner_large-v2.1")
 
 app = FastAPI()
 
-class Email(BaseModel):
+class Thread(BaseModel):
     text: str
 
-class EmailsList(BaseModel):
-    emails: List[Email]
+class ThreadList(BaseModel):
+    threads: List[Thread]
 
-@app.post("/inference")
-async def inference(input_data: EmailsList):
+@app.post("/inference/ner")
+def inference(input_data: ThreadList):
     results = []
 
-    for email in input_data.emails:
-        entities = model.predict_entities(email.text, ["Interval","Frequency","Date","Money","GiftType", "Department", "Person"], threshold=0.8)
+    for thread in input_data.threads:
+        entities = model.predict_entities(thread.text, ["Interval","Frequency","Date","Money","GiftType", "Department", "Person"], threshold=0.8)
+        
         results.append({
-            "text": email.text,
+            "text": thread.text,
             "entities": entities
         })
 
