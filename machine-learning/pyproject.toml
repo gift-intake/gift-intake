@@ -10,6 +10,7 @@ python = "^3.12"
 fastapi = {extras = ["standard"], version = "^0.115.6"}
 gliner = "^0.2.15"
 ollama = "^0.4.7"
+pydantic-settings = "^2.8.1"
 
 
 [build-system]
