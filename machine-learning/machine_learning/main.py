@@ -1,26 +1,104 @@
-from fastapi import FastAPI
-from machine_learning.schemas.InferenceRequest import SummaryRequest
-from machine_learning.schemas.InferenceResponse import SummaryResponse
-from machine_learning.api.endpoints.health import router as health_route
+from fastapi import FastAPI, File, UploadFile, HTTPException
+from io import BytesIO
+import PyPDF2
+from PIL import Image
+import pytesseract
+from docx import Document
+from gliner import GLiNER
 
-app = FastAPI(
-    title="Gift Intake Inference API",
-    description="API for performing NER and summarization on donation emails",
-    version="0.0.1",
-)
+app = FastAPI()
 
+# Initialize GLiNER model
+model = GLiNER.from_pretrained("urchade/gliner_medium-v2.1")
 
-@app.post("/api/v1/inference/summary", response_model=SummaryResponse)
-async def get_summary(request: SummaryRequest):
+# Function to extract text from PDF
+def extract_text_from_pdf(pdf_file: BytesIO):
+    try:
+        pdf_reader = PyPDF2.PdfReader(pdf_file)
+        text = ""
+        for page in pdf_reader.pages:
+            page_text = page.extract_text() or ""  # Handle None
+            text += page_text
+        return text
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Error reading PDF: " + str(e))
+
+# Function to extract text from PNG or any image
+def extract_text_from_image(image_file: BytesIO):
+    try:
+        image = Image.open(image_file)
+        text = pytesseract.image_to_string(image)
+        return text
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Error extracting text from image: " + str(e))
+
+# Function to extract text from DOCX file
+def extract_text_from_docx(docx_file: BytesIO):
+    try:
+        doc = Document(docx_file)
+        text = ""
+        for para in doc.paragraphs:
+            text += para.text + "\n"  # Add newlines for better structure
+        return text
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Error reading DOCX file: " + str(e))
+
+# Function to split full name into first and last name
+def split_name(full_name: str):
+    name_parts = full_name.split()
+    if len(name_parts) == 1:
+        first_name = name_parts[0]
+        last_name = ""  # Handle case where no last name is provided
+    else:
+        first_name = name_parts[0]
+        last_name = " ".join(name_parts[1:])  # Handles middle names, if any
+    return first_name, last_name
+
+@app.post("/extract/")
+async def extract_keywords(file: UploadFile = File(...)):
     """
-    Summarize the input text
+    Process the uploaded file and extract structured donation details.
     """
-    return SummaryResponse(summary="This is a summary of the input text")
+    try:
+        # Read the uploaded file
+        file_data = await file.read()
 
+        # Determine file type
+        file_type = file.content_type
 
-app.include_router(health_route, prefix="/api/v1")
+        # Extract text based on file type
+        if "pdf" in file_type:
+            text = extract_text_from_pdf(BytesIO(file_data))
+        elif "image" in file_type or file_type in ["png", "jpeg", "jpg"]:
+            text = extract_text_from_image(BytesIO(file_data))
+        elif "word" in file_type or "msword" in file_type:
+            text = extract_text_from_docx(BytesIO(file_data))
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported file type")
 
-if __name__ == "__main__":
-    import uvicorn
+        if not text.strip():
+            raise HTTPException(status_code=400, detail="No text extracted from file")
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+        # Run entity extraction using GLiNER
+        labels = ["Interval", "Organization", "Money", "Date", "Phone", "Address", "FirstName", "LastName", "Faculty", "PaymentMethod", "Email", "Gift Type", "Frequency", "Distribution"]
+
+        # Perform entity extraction with the GLiNER model
+        entities = model.predict_entities(text, labels)
+
+        # Structure extracted entities into a dictionary
+        structured_entities = {entity["label"]: entity["text"] for entity in entities}
+
+        if "FirstName" not in structured_entities and "LastName" not in structured_entities:
+
+        # Extract full name (assuming FirstName and LastName are detected)
+            full_name = structured_entities.get("FirstName", "") + " " + structured_entities.get("LastName", "")
+
+            if full_name.strip():
+                first_name, last_name = split_name(full_name)
+                structured_entities["FirstName"] = first_name
+                structured_entities["LastName"] = last_name
+
+        return {"extracted_entities": structured_entities}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
