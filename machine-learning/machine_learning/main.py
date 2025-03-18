@@ -80,7 +80,7 @@ async def extract_keywords(file: UploadFile = File(...)):
             raise HTTPException(status_code=400, detail="No text extracted from file")
 
         # Run entity extraction using GLiNER
-        labels = ["Interval", "Organization", "Money", "Date", "Phone", "Address", "FirstName", "LastName", "Faculty", "PaymentMethod", "Email", "Gift Type", "Frequency", "Distribution"]
+        labels = ["giftAmount","donorFirstName", "donorMiddleName","donorLastName","organizationName", "giftIntakeType","donorAddress","donorCity","donorProvince","donorCountry","donorPhone","donorEmail","giftCurrency","giftDate","paymentMethod"] 
 
         # Perform entity extraction with the GLiNER model
         entities = model.predict_entities(text, labels)
@@ -88,15 +88,15 @@ async def extract_keywords(file: UploadFile = File(...)):
         # Structure extracted entities into a dictionary
         structured_entities = {entity["label"]: entity["text"] for entity in entities}
 
-        if "FirstName" not in structured_entities and "LastName" not in structured_entities:
+        if "donorFirstName" not in structured_entities and "donorLastName" not in structured_entities:
 
         # Extract full name (assuming FirstName and LastName are detected)
-            full_name = structured_entities.get("FirstName", "") + " " + structured_entities.get("LastName", "")
+            full_name = structured_entities.get("donorFirstName", "") + " " + structured_entities.get("donorLastName", "")
 
             if full_name.strip():
                 first_name, last_name = split_name(full_name)
-                structured_entities["FirstName"] = first_name
-                structured_entities["LastName"] = last_name
+                structured_entities["donorFirstName"] = first_name
+                structured_entities["donorLastName"] = last_name
 
         return {"extracted_entities": structured_entities}
 
