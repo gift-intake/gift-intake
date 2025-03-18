@@ -80,25 +80,34 @@ async def extract_keywords(file: UploadFile = File(...)):
             raise HTTPException(status_code=400, detail="No text extracted from file")
 
         # Run entity extraction using GLiNER
-        labels = ["giftAmount","donorFirstName", "donorMiddleName","donorLastName","organizationName", "giftIntakeType","donorAddress","donorCity","donorProvince","donorCountry","donorPhone","donorEmail","giftCurrency","giftDate","paymentMethod"] 
+        labels = [
+            "constituentID", "constituentType", "giftAmount", "donorFirstName", 
+            "donorMiddleName", "donorLastName", "organizationName", "giftIntakeType", 
+            "donorAddress", "donorCity", "donorProvince", "donorCountry", "donorPhone", 
+            "donorEmail", "giftCurrency", "giftDate", "paymentMethod"
+        ]
 
         # Perform entity extraction with the GLiNER model
         entities = model.predict_entities(text, labels)
 
-        # Structure extracted entities into a dictionary
-        structured_entities = {entity["label"]: entity["text"] for entity in entities}
+        # Initialize structured_entities with empty strings for all labels
+        structured_entities = {label: "" for label in labels}
 
-        if "donorFirstName" not in structured_entities and "donorLastName" not in structured_entities:
+        # Populate structured_entities with extracted values
+        for entity in entities:
+            structured_entities[entity["label"]] = entity["text"]
 
-        # Extract full name (assuming FirstName and LastName are detected)
+        # Extract full name only if donorFirstName or donorLastName is missing
+        if not structured_entities["donorFirstName"] and not structured_entities["donorLastName"]:
             full_name = structured_entities.get("donorFirstName", "") + " " + structured_entities.get("donorLastName", "")
+            full_name = full_name.strip()
 
-            if full_name.strip():
+            if full_name:
                 first_name, last_name = split_name(full_name)
                 structured_entities["donorFirstName"] = first_name
                 structured_entities["donorLastName"] = last_name
 
-        return {"extracted_entities": structured_entities}
+        return structured_entities
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
