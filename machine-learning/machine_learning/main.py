@@ -1,113 +1,109 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
-from io import BytesIO
-import PyPDF2
-from PIL import Image
-import pytesseract
-from docx import Document
+from fastapi import FastAPI, HTTPException, File, UploadFile
+from utils.outlook_extractor import fetch_outlook_attachments
+from utils.docx_extractor import extract_text_from_docx
+from utils.image_extractor import extract_text_from_image
+from utils.pdf_extractor import extract_text_from_pdf
 from gliner import GLiNER
+from io import BytesIO
+import logging
 
+# Initialize FastAPI app
 app = FastAPI()
 
 # Initialize GLiNER model
 model = GLiNER.from_pretrained("urchade/gliner_medium-v2.1")
 
-# Function to extract text from PDF
-def extract_text_from_pdf(pdf_file: BytesIO):
-    try:
-        pdf_reader = PyPDF2.PdfReader(pdf_file)
-        text = ""
-        for page in pdf_reader.pages:
-            page_text = page.extract_text() or ""  # Handle None
-            text += page_text
-        return text
-    except Exception as e:
-        raise HTTPException(status_code=400, detail="Error reading PDF: " + str(e))
+# Set up logging
+logging.basicConfig(level=logging.INFO)
 
-# Function to extract text from PNG or any image
-def extract_text_from_image(image_file: BytesIO):
-    try:
-        image = Image.open(image_file)
-        text = pytesseract.image_to_string(image)
-        return text
-    except Exception as e:
-        raise HTTPException(status_code=400, detail="Error extracting text from image: " + str(e))
-
-# Function to extract text from DOCX file
-def extract_text_from_docx(docx_file: BytesIO):
-    try:
-        doc = Document(docx_file)
-        text = ""
-        for para in doc.paragraphs:
-            text += para.text + "\n"  # Add newlines for better structure
-        return text
-    except Exception as e:
-        raise HTTPException(status_code=400, detail="Error reading DOCX file: " + str(e))
-
-# Function to split full name into first and last name
+# Function to split full name into First, Middle, and Last name
 def split_name(full_name: str):
+    """
+    Split a full name into First, Middle, and Last name.
+    """
     name_parts = full_name.split()
     if len(name_parts) == 1:
-        first_name = name_parts[0]
-        last_name = ""  # Handle case where no last name is provided
+        return name_parts[0], "", ""  # Only First Name
+    elif len(name_parts) == 2:
+        return name_parts[0], "", name_parts[1]  # First and Last Name
     else:
-        first_name = name_parts[0]
-        last_name = " ".join(name_parts[1:])  # Handles middle names, if any
-    return first_name, last_name
+        return name_parts[0], " ".join(name_parts[1:-1]), name_parts[-1]  # First, Middle(s), Last
 
-@app.post("/extract/")
-async def extract_keywords(file: UploadFile = File(...)):
+# Helper function to extract text based on file type
+def extract_text_from_file(file_data: BytesIO, file_type: str):
     """
-    Process the uploaded file and extract structured donation details.
+    Extract text from the file based on the file type.
+    """
+    if "pdf" in file_type:
+        return extract_text_from_pdf(file_data)
+    elif "image" in file_type or file_type in ["png", "jpeg", "jpg"]:
+        return extract_text_from_image(file_data)
+    elif "word" in file_type or "msword" in file_type:
+        return extract_text_from_docx(file_data)
+    else:
+        return None
+
+@app.post("/extract/outlook/")
+async def extract_outlook_attachments_route(username: str, password: str):
+    """
+    Fetch attachments from Outlook and process them using the extraction logic.
     """
     try:
-        # Read the uploaded file
-        file_data = await file.read()
+        # Fetch the attachments from Outlook
+        attachments = fetch_outlook_attachments(username, password)
 
-        # Determine file type
-        file_type = file.content_type
+        # If the attachments are not in the expected format, raise an error
+        if not isinstance(attachments, list):
+            raise HTTPException(status_code=400, detail=attachments.get("error", "Unknown error occurred."))
 
-        # Extract text based on file type
-        if "pdf" in file_type:
-            text = extract_text_from_pdf(BytesIO(file_data))
-        elif "image" in file_type or file_type in ["png", "jpeg", "jpg"]:
-            text = extract_text_from_image(BytesIO(file_data))
-        elif "word" in file_type or "msword" in file_type:
-            text = extract_text_from_docx(BytesIO(file_data))
-        else:
-            raise HTTPException(status_code=400, detail="Unsupported file type")
-
-        if not text.strip():
-            raise HTTPException(status_code=400, detail="No text extracted from file")
-
-        # Run entity extraction using GLiNER
+        # Labels for entity extraction
         labels = [
-            "constituentID", "constituentType", "giftAmount", "donorFirstName", 
-            "donorMiddleName", "donorLastName", "organizationName", "giftIntakeType", 
-            "donorAddress", "donorCity", "donorProvince", "donorCountry", "donorPhone", 
-            "donorEmail", "giftCurrency", "giftDate", "paymentMethod"
+            "ConstituentID", "ConstituentType", "GiftAmount", "DonorFirstName",
+            "DonorMiddleName", "DonorLastName", "OrganizationName", "GiftIntakeType",
+            "DonorAddress", "DonorCity", "DonorProvince", "DonorCountry", "DonorPhone",
+            "DonorEmail", "GiftCurrency", "GiftDate", "PaymentMethod"
         ]
 
-        # Perform entity extraction with the GLiNER model
-        entities = model.predict_entities(text, labels)
+        results = []
 
-        # Initialize structured_entities with empty strings for all labels
-        structured_entities = {label: "" for label in labels}
+        for attachment in attachments:
+            file_data = attachment["file_data"]
+            file_type = attachment["file_type"]
+            file_name = attachment["file_name"]
 
-        # Populate structured_entities with extracted values
-        for entity in entities:
-            structured_entities[entity["label"]] = entity["text"]
+            # Extract text from the attachment file based on its type
+            text = extract_text_from_file(BytesIO(file_data), file_type)
 
-        # Extract full name only if donorFirstName or donorLastName is missing
-        if not structured_entities["donorFirstName"] and not structured_entities["donorLastName"]:
-            full_name = structured_entities.get("donorFirstName", "") + " " + structured_entities.get("donorLastName", "")
-            full_name = full_name.strip()
+            if not text:
+                logging.warning(f"No text extracted from file: {file_name}")
+                raise HTTPException(status_code=400, detail=f"No text extracted from file: {file_name}")
 
-            if full_name:
-                first_name, last_name = split_name(full_name)
-                structured_entities["donorFirstName"] = first_name
-                structured_entities["donorLastName"] = last_name
+            # Run entity extraction with GLiNER
+            entities = model.predict_entities(text, labels)
+            structured_entities = {label: "" for label in labels}
 
-        return structured_entities
+            # Populate extracted values into the structured entity dictionary
+            for entity in entities:
+                structured_entities[entity["label"]] = entity["text"]
+
+            # If only "FullName" is detected but not first/last names, split it
+            if not structured_entities["DonorFirstName"] and not structured_entities["DonorLastName"]:
+                full_name = structured_entities.get("FullName", "").strip()
+                if full_name:
+                    first_name, middle_name, last_name = split_name(full_name)
+                    structured_entities["DonorFirstName"] = first_name
+                    structured_entities["DonorMiddleName"] = middle_name
+                    structured_entities["DonorLastName"] = last_name
+
+            # Append the result for each attachment
+            results.append({
+                "file_name": file_name,
+                "structured_entities": structured_entities
+            })
+
+        return results
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+        logging.error(f"Error while processing attachments: {e}")
+        raise HTTPException(status_code=500, detail=f"Error: {e}")
+

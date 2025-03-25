@@ -22,8 +22,11 @@ class Result(BaseModel):
 def generate_json_schema():
     return Result.model_json_schema()
 
-labels = ["giftAmount","donorFirstName", "donorMiddleName","donorLastName","organizationName", "giftIntakeType","donorAddress","donorCity","donorProvince","donorCountry","donorPhone","donorEmail","giftCurrency","giftDate","paymentMethod"] 
-
+labels = [
+            "ConstituentID", "ConstituentType", "GiftAmount", "DonorFirstName",
+            "DonorMiddleName", "DonorLastName", "OrganizationName", "GiftIntakeType",
+            "DonorAddress", "DonorCity", "DonorProvince", "DonorCountry", "DonorPhone",
+            "DonorEmail", "GiftCurrency", "GiftDate", "PaymentMethod"]
 
 test_set_path = Path("results.jsonl")
 
