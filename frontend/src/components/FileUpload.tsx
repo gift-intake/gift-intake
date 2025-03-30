@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { UploadCloud } from "lucide-react";
+import { File, UploadCloud } from "lucide-react";
 
 type FileUploadProps = React.ComponentProps<typeof Card>;
 
@@ -24,7 +24,10 @@ export default function FileUpload({ className, ...props }: FileUploadProps) {
   });
 
   return (
-    <Card className={cn("w-[380px]", className)} {...props}>
+    <Card
+      className={cn("w-[380px] shadow-md hover:shadow-lg transition-shadow", className)}
+      {...props}
+    >
       <CardHeader>
         <CardTitle>Upload File</CardTitle>
         <CardDescription>Drag and drop your files.</CardDescription>
@@ -43,11 +46,12 @@ export default function FileUpload({ className, ...props }: FileUploadProps) {
           <ul className="mt-4 space-y-2">
             {files.map((file) => {
               const truncatedName =
-                file.name.length > 20 ? file.name.slice(0, 20) + "..." : file.name;
+                file.name.length > 25 ? file.name.slice(0, 25) + "..." : file.name;
 
               return (
-                <li key={file.name} className="text-sm text-gray-700">
-                  {truncatedName}
+                <li key={file.name} className="flex items-center gap-2 text-sm text-gray-700">
+                  <File className="w-4 h-4 text-gray-400" />
+                  <span>{truncatedName}</span>
                 </li>
               );
             })}
