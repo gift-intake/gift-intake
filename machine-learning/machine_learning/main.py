@@ -1,11 +1,11 @@
-from fastapi import FastAPI, HTTPException, File, UploadFile
-from utils.outlook_extractor import fetch_outlook_attachments
-from utils.docx_extractor import extract_text_from_docx
-from utils.image_extractor import extract_text_from_image
-from utils.pdf_extractor import extract_text_from_pdf
-from gliner import GLiNER
-from io import BytesIO
+import os
+import tempfile
 import logging
+import magic  # Library to check MIME type
+from fastapi import FastAPI, HTTPException, File, UploadFile
+from io import BytesIO
+import extract_msg
+from gliner import GLiNER
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -16,94 +16,76 @@ model = GLiNER.from_pretrained("urchade/gliner_medium-v2.1")
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
-# Function to split full name into First, Middle, and Last name
-def split_name(full_name: str):
-    """
-    Split a full name into First, Middle, and Last name.
-    """
-    name_parts = full_name.split()
-    if len(name_parts) == 1:
-        return name_parts[0], "", ""  # Only First Name
-    elif len(name_parts) == 2:
-        return name_parts[0], "", name_parts[1]  # First and Last Name
-    else:
-        return name_parts[0], " ".join(name_parts[1:-1]), name_parts[-1]  # First, Middle(s), Last
-
-# Helper function to extract text based on file type
-def extract_text_from_file(file_data: BytesIO, file_type: str):
-    """
-    Extract text from the file based on the file type.
-    """
-    if "pdf" in file_type:
-        return extract_text_from_pdf(file_data)
-    elif "image" in file_type or file_type in ["png", "jpeg", "jpg"]:
-        return extract_text_from_image(file_data)
-    elif "word" in file_type or "msword" in file_type:
-        return extract_text_from_docx(file_data)
-    else:
-        return None
+# Define entity labels for GLiNER extraction
+ENTITY_LABELS = [
+    "ConstituentID", "ConstituentType", "GiftAmount", "DonorFirstName",
+    "DonorMiddleName", "DonorLastName", "OrganizationName", "GiftIntakeType",
+    "DonorAddress", "DonorCity", "DonorProvince", "DonorCountry", "DonorPhone",
+    "DonorEmail", "GiftCurrency", "GiftDate", "PaymentMethod"
+]
 
 @app.post("/extract/outlook/")
-async def extract_outlook_attachments_route(username: str, password: str):
+async def extract_outlook_attachments_route(file: UploadFile = File(...)):
     """
-    Fetch attachments from Outlook and process them using the extraction logic.
+    Extract text and entities from a .msg email file.
     """
     try:
-        # Fetch the attachments from Outlook
-        attachments = fetch_outlook_attachments(username, password)
+        # Validate file type
+        file_name = file.filename
+        if not file_name.endswith(".msg"):
+            raise HTTPException(status_code=400, detail="Only .msg files are supported.")
 
-        # If the attachments are not in the expected format, raise an error
-        if not isinstance(attachments, list):
-            raise HTTPException(status_code=400, detail=attachments.get("error", "Unknown error occurred."))
+        # Check if the file is a valid OLE2 structured storage file (Microsoft Outlook .msg format)
+        file_bytes = await file.read()
+        mime = magic.Magic(mime=True)
+        file_type = mime.from_buffer(file_bytes)
 
-        # Labels for entity extraction
-        labels = [
-            "ConstituentID", "ConstituentType", "GiftAmount", "DonorFirstName",
-            "DonorMiddleName", "DonorLastName", "OrganizationName", "GiftIntakeType",
-            "DonorAddress", "DonorCity", "DonorProvince", "DonorCountry", "DonorPhone",
-            "DonorEmail", "GiftCurrency", "GiftDate", "PaymentMethod"
-        ]
+        # Check for valid .msg MIME type
+        if file_type != 'application/vnd.ms-outlook':
+            raise HTTPException(status_code=400, detail="Invalid .msg file format.")
 
-        results = []
+        # Create a temporary file path
+        temp_dir = tempfile.gettempdir()
+        temp_path = os.path.join(temp_dir, file_name)
 
-        for attachment in attachments:
-            file_data = attachment["file_data"]
-            file_type = attachment["file_type"]
-            file_name = attachment["file_name"]
+        # Write the file to disk and CLOSE it before processing
+        with open(temp_path, "wb") as temp_file:
+            temp_file.write(file_bytes)
 
-            # Extract text from the attachment file based on its type
-            text = extract_text_from_file(BytesIO(file_data), file_type)
+        # Extract email contents using msg-extractor
+        msg = extract_msg.Message(BytesIO(file_bytes))
+        msg_subject = msg.subject
+        msg_body = msg.body
+        msg_sender = msg.sender
+        msg_date = msg.date
+        msg_attachments = [att.longFilename for att in msg.attachments]  # List attachment names
 
-            if not text:
-                logging.warning(f"No text extracted from file: {file_name}")
-                raise HTTPException(status_code=400, detail=f"No text extracted from file: {file_name}")
+        # Delete temp file after processing
+        os.remove(temp_path)
 
-            # Run entity extraction with GLiNER
-            entities = model.predict_entities(text, labels)
-            structured_entities = {label: "" for label in labels}
+        # If extraction failed, raise an error
+        if not msg_body:
+            logging.warning(f"No text extracted from file: {file_name}")
+            raise HTTPException(status_code=400, detail=f"No text extracted from file: {file_name}")
 
-            # Populate extracted values into the structured entity dictionary
-            for entity in entities:
-                structured_entities[entity["label"]] = entity["text"]
+        # Run entity extraction with GLiNER on the extracted body text
+        entities = model.predict_entities(msg_body, ENTITY_LABELS)
+        structured_entities = {label: "" for label in ENTITY_LABELS}
 
-            # If only "FullName" is detected but not first/last names, split it
-            if not structured_entities["DonorFirstName"] and not structured_entities["DonorLastName"]:
-                full_name = structured_entities.get("FullName", "").strip()
-                if full_name:
-                    first_name, middle_name, last_name = split_name(full_name)
-                    structured_entities["DonorFirstName"] = first_name
-                    structured_entities["DonorMiddleName"] = middle_name
-                    structured_entities["DonorLastName"] = last_name
+        # Populate extracted values into the structured entity dictionary
+        for entity in entities:
+            structured_entities[entity["label"]] = entity["text"]
 
-            # Append the result for each attachment
-            results.append({
-                "file_name": file_name,
-                "structured_entities": structured_entities
-            })
-
-        return results
+        return {
+            "file_name": file_name,
+            "subject": msg_subject,
+            "sender": msg_sender,
+            "date": msg_date,
+            "body": msg_body,
+            "attachments": msg_attachments,
+            "structured_entities": structured_entities
+        }
 
     except Exception as e:
-        logging.error(f"Error while processing attachments: {e}")
+        logging.error(f"Error while processing .msg file: {e}")
         raise HTTPException(status_code=500, detail=f"Error: {e}")
-
