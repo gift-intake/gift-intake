@@ -23,13 +23,13 @@ def extract_msg_details(msg_file: BytesIO) -> OutlookMessage:
     Extract details from an Outlook .msg file.
 
     Args:
-        msg_file_path (str): Path to the .msg file.
+        msg_file (str): Path to the .msg file.
 
     Returns:
         OutlookMessage: Extracted details such as sender, body, and attachments.
     """
     try:
-        msg = extract_msg.Message(msg_file_path)
+        msg = extract_msg.Message(msg_file)
         attachment_list = []
         
         for attachment in msg.attachments:
