@@ -18,7 +18,7 @@ class OutlookMessage:
     body: str
     attachments: List[OutlookAttachment]
 
-def extract_msg_details(msg_file_path: str) -> OutlookMessage:
+def extract_msg_details(msg_file: BytesIO) -> OutlookMessage:
     """
     Extract details from an Outlook .msg file.
 
