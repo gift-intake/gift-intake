@@ -14,22 +14,51 @@ const TextDisplay = () => {
        
     });
 
-  // useEffect(() => {
-  //   Office.onReady(async (info) => {
-  //     if (info.host === Office.HostType.Outlook) {
-  //       const subjectText = await props.getText(subject);
-  //       setSubject(subjectText);
-  //     }
-  //   });
-  // }, []);
+    const msgCC = Office.context.mailbox.item.cc;
+   
 
+    const msgAttach = Office.context.mailbox.item.attachments;
+    const attachments = [];
+    if(msgAttach.length>0){
+      for(let i = 0; i < msgAttach.length; i++){
+        attachments.push(msgAttach[i].name);
+      }
+    }else{
+      attachments.push("This email doesn't contain any attachments.");
+    }
+    
+    const msgTo = Office.context.mailbox.item.to;
 
   return (
     <div style={{ padding: "1rem" }}>
+    <h2>Email To</h2>
+      <p>
+        <ul>
+        {msgTo.map((item) =>{
+          return <li>{item.displayName}: {item.emailAddress}</li>
+        })}
+        </ul>
+      </p>
+      <h2>Email Cc</h2>
+      <p>
+        <ul>
+        {msgCC.map((item) =>{
+          return <li>{item.displayName} :{item.emailAddress}</li>
+        })}
+        </ul>
+      </p>
+
       <h2>Email Body</h2>
       <p>{subject}</p>
-      {/* <Textarea size="large" value={subject}/> */}
-      
+
+      <h2>Email Attachments</h2>
+      <p>
+        <ul>
+        {attachments.map((item) =>{
+          return <li> {item}</li>
+        })}
+        </ul>
+      </p>      
     </div>
   );
 }

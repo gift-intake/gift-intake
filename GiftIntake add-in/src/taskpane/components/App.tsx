@@ -38,10 +38,7 @@ const App: React.FC<AppProps> = () => {
 
   return (
     <div className={styles.root}>
-      {/* <Header logo="assets/logo-filled.png" title={props.title} message="Welcome" /> */}
-      <HeroList message="Discover what this add-in can do for you today!" items={listItems} />
       <TextDisplay />
-      {/* <TextInsertion insertText={insertText} /> */}
     </div>
   );
 };
