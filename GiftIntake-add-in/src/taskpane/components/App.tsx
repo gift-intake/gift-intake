@@ -195,14 +195,20 @@ export default function App() {
         </div>
       )}
 
-      {!loading && !results && emailBody && (
+      {/* {!loading && !results && emailBody && (
         <div className="bg-gray-50 p-4 border rounded">
           <h3 className="text-lg font-medium mb-2">Email Content</h3>
           <pre className="whitespace-pre-wrap">{emailBody}</pre>
         </div>
-      )}
+      )} */}
 
-      {!loading && results && <DisplayResults data={results} />}
+      {!loading && results && emailBody && (
+        <div className="mt-8">
+        <h3 className="text-lg font-medium mb-4">Email Content</h3>
+        <DisplayResults data={results} />
+      </div>
+        
+        )}
 
       {attachments.length > 0 && (
         <div className="mt-8">
