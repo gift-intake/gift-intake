@@ -1,28 +1,15 @@
 import * as React from "react";
-import Header from "./Header";
-import HeroList, { HeroListItem } from "./HeroList";
-import TextInsertion from "./TextInsertion";
-import { makeStyles } from "@fluentui/react-components";
-import { Ribbon24Regular, LockOpen24Regular, DesignIdeas24Regular } from "@fluentui/react-icons";
-import { getEmailSubject } from "../taskpane";
-import TextDisplay from "./TextDisplay";
 import createClient from "openapi-fetch";
 import { paths } from "../../lib/api/v1";
+import { Button } from "@/components/ui/button";
 
 interface AppProps {
   title: string;
 }
 
-const useStyles = makeStyles({
-  root: {
-    minHeight: "100vh",
-  },
-});
-
 const client = createClient<paths>({ baseUrl: "http://127.0.0.1:8000" });
 
 const App: React.FC<AppProps> = ({ title }) => {
-  const styles = useStyles();
   const [healthData, setHealthData] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -50,8 +37,8 @@ const App: React.FC<AppProps> = ({ title }) => {
   }, []);
 
   return (
-    <div className={styles.root}>
-      <h2>{title}</h2>
+    <div>
+      <h2 className="text-amber-400 text-9xl">{title}</h2>
       <div>
         <h3>Health Check Test</h3>
 
@@ -60,14 +47,14 @@ const App: React.FC<AppProps> = ({ title }) => {
         {error && (
           <div>
             <p>Error: {error}</p>
-            <button onClick={checkHealth}>Retry</button>
+            <Button onClick={checkHealth}>Retry</Button>
           </div>
         )}
 
         {!loading && !error && healthData && (
           <div>
             <p>Status: {JSON.stringify(healthData)}</p>
-            <button onClick={checkHealth}>Refresh</button>
+            <Button onClick={checkHealth}>Refresh</Button>
           </div>
         )}
       </div>
