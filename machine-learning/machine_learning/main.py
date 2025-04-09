@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from machine_learning.api.endpoints import extraction, health
+from machine_learning.api.endpoints import extraction, health, display
 
 app = FastAPI(
     title="Gift Intake",
@@ -9,3 +9,4 @@ app = FastAPI(
 
 app.include_router(extraction.router, prefix="/api/v1", tags=["extraction"])
 app.include_router(health.router, prefix="/api/v1", tags=["health"])
+app.include_router(display.router, prefix="/api/v1/display", tags=["display"])
