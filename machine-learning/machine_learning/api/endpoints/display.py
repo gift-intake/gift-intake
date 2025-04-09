@@ -64,7 +64,7 @@ async def extract_file(file: UploadFile) -> InferenceResponseData:
 
 
 @router.post("/extract-text")
-async def extract_file(request: InferenceRequest) -> InferenceResponseData:
+async def extract_text(request: InferenceRequest) -> InferenceResponseData:
     """
     Process the uploaded file and extracts entities using GLiNER.
     """
