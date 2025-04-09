@@ -1,4 +1,11 @@
 import * as React from "react";
+import Header from "./Header";
+import HeroList, { HeroListItem } from "./HeroList";
+import TextInsertion from "./TextInsertion";
+import { makeStyles } from "@fluentui/react-components";
+import { Ribbon24Regular, LockOpen24Regular, DesignIdeas24Regular } from "@fluentui/react-icons";
+import { getEmailSubject } from "../taskpane";
+import TextDisplay from "./TextDisplay";
 import createClient from "openapi-fetch";
 import { paths } from "../../lib/api/v1";
 
@@ -6,9 +13,16 @@ interface AppProps {
   title: string;
 }
 
+const useStyles = makeStyles({
+  root: {
+    minHeight: "100vh",
+  },
+});
+
 const client = createClient<paths>({ baseUrl: "http://127.0.0.1:8000" });
 
 const App: React.FC<AppProps> = ({ title }) => {
+  const styles = useStyles();
   const [healthData, setHealthData] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -36,35 +50,24 @@ const App: React.FC<AppProps> = ({ title }) => {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <h2 className="text-4xl text-red-600 mb-4">{title}</h2>
-      <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-        <h3 className="text-2xl font-semibold text-gray-700 mb-4">Health Check</h3>
+    <div className={styles.root}>
+      <h2>{title}</h2>
+      <div>
+        <h3>Health Check Test</h3>
 
-        {loading && <p className="text-gray-600">Loading...</p>}
+        {loading && <p>Loading...</p>}
 
         {error && (
-          <div className="text-red-500 mb-4">
+          <div>
             <p>Error: {error}</p>
-            <button
-              className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-              onClick={checkHealth}
-            >
-              Retry
-            </button>
+            <button onClick={checkHealth}>Retry</button>
           </div>
         )}
 
         {!loading && !error && healthData && (
           <div>
-            <p className="text-green-500 font-bold">Status:</p>
-            <p className="text-gray-700">{JSON.stringify(healthData)}</p>
-            <button
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mt-4"
-              onClick={checkHealth}
-            >
-              Refresh
-            </button>
+            <p>Status: {JSON.stringify(healthData)}</p>
+            <button onClick={checkHealth}>Refresh</button>
           </div>
         )}
       </div>
