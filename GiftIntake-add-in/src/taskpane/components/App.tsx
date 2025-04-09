@@ -25,7 +25,7 @@ const App: React.FC<AppProps> = ({ title }) => {
       }
       setHealthData(data);
     } catch (err) {
-      setError("Failed to connect to health endpoint");
+      setError("Failed to connect to health endpoint ${err.message}");
       console.error(err);
     } finally {
       setLoading(false);
