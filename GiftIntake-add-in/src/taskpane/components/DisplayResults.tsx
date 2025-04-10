@@ -144,7 +144,7 @@ export default function DisplayResults({ data }: DisplayResultsProps) {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <ScrollArea className="max-h-[300px] sm:max-h-[400px] md:max-h-[500px] p-4 border rounded-md">
+        <ScrollArea className="max-h-[300px] sm:max-h-[400px] md:max-h-[500px] p-4 border rounded-md overflow-y-auto">
           <div>{renderHighlightedText()}</div>
         </ScrollArea>
 
