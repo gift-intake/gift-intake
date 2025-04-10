@@ -2,6 +2,7 @@ import * as React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./components/App";
 import "./index.css";
+import "../styles/global.css";
 
 /* global document, Office, module, require, HTMLElement */
 
@@ -12,9 +13,7 @@ const root = rootElement ? createRoot(rootElement) : undefined;
 
 /* Render application after Office initializes */
 Office.onReady(() => {
-  root?.render(
-      <App title={title} />
-  );
+  root?.render(<App />);
 });
 
 if ((module as any).hot) {
