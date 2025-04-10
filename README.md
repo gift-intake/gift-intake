@@ -2,19 +2,19 @@
 
 A Named Entity Recognition (NER) solution to extract and structure key information from unstructured donation email content.
 
-## Docker
-
-To set up the environment for testing and running the application, we use Docker to containerize the environment and deploy the application. It is assumed that Docker and Docker Compose are installed and functioning properly.
-
-First, create a .env file in the root directory to store the credential information:
-
-```env
-POSTGRES_USER=giftintake_dev
-POSTGRES_PASSWORD=giftintake_dev
-```
-
-To run the application, simply execute the following command:
-
-```bash
-docker-compose up
-```
+## Installation & Setup
+1. Clone the repository  
+```git clone https://github.com/gift-intake/gift-intake.git```
+2. First, go to the directory of the "GiftIntake-add-in "  
+   ```cd GiftIntake-add-in```
+    - Install dependencies  
+   ```npm i```    
+    - Run the frount-end(Outlook add-in)   
+   ```npm start```
+ 3. Second, go to the directory of the "machine_learning"  
+    ```cd machine-learning/machine_learning```  
+     - Install the dependencies  
+     ```poetry install```  
+     - Run the back-end  
+     ```poetry run uvicorn machine_learning.main:app --reload```  
+4. Open your Outlook inbox in your browser and open the donation email. In the App, you will see our add-in.
