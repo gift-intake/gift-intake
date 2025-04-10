@@ -39,10 +39,14 @@ export default function App() {
       setResults(data);
     } catch (err) {
 <<<<<<< HEAD
+<<<<<<< HEAD
       setError(`Failed to process email: ${err instanceof Error ? err.message : String(err)}`);
 =======
       setError("Failed to connect to health endpoint ${err.message}");
 >>>>>>> 65158328 (set up)
+=======
+      setError("Failed to connect to health endpoint ${err.message}");
+>>>>>>> 8ae4f9cda063d58d855d7b6a605a779f2053db9c
       console.error(err);
     } finally {
       setLoading(false);
