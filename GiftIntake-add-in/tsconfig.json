@@ -14,24 +14,21 @@
     "removeComments": false,
     "sourceMap": true,
     "target": "es5",
-    "lib": [
-      "es7",
-      "dom"
-    ],
+    "lib": ["es7", "dom"],
     "pretty": true,
-    "typeRoots": [
-      "node_modules/@types"
-    ]
+    "typeRoots": ["node_modules/@types"],
+    "baseUrl": ".",
+    "paths": {
+       "@/*": ["./src/*"]
+    }
   },
-  "exclude": [
-    "node_modules"
-  ],
+  "exclude": ["node_modules"],
   "compileOnSave": false,
   "buildOnSave": false,
-  "ts-node": { 
+  "ts-node": {
     "compilerOptions": {
       "module": "commonjs"
     },
-    "files": true 
+    "files": true
   }
 }
