@@ -5,7 +5,7 @@ model = GLiNER.from_pretrained("urchade/gliner_medium-v2.1")
 
 ENTITY_LABELS = [
   "Interval", "Organization", "Money", "Date", "Phone", "Address", "Person", "Faculty", 
-  "PaymentMethod", "Email", "Gift Type", "Frequency", "Distribution"
+  "PaymentMethod", "Email", "GiftType", "Frequency", "Distribution"
 ]
 
 def extract_entities(text: str) -> ModelResults:
