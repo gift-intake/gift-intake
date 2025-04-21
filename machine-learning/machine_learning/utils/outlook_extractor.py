@@ -1,5 +1,6 @@
+import re
 import extract_msg
-from typing import List
+from typing import List, Tuple
 from dataclasses import dataclass
 from pkg_resources import ExtractionError
 from io import BytesIO
@@ -14,9 +15,34 @@ class OutlookAttachment:
 
 @dataclass
 class OutlookMessage:
-    sender: str
+    sender_name: str
+    sender_email: str
     body: str
     attachments: List[OutlookAttachment]
+
+def parse_sender(sender_string: str) -> Tuple[str, str]:
+    """
+    Parse a sender string in the format "Name <email>" into separate name and email components.
+    
+    Args:
+        sender_string (str): The sender string to parse.
+        
+    Returns:
+        Tuple[str, str]: A tuple containing (sender_name, sender_email).
+    """
+    # Use regex to extract email from within angle brackets
+    email_match = re.search(r'<([^<>]+)>', sender_string)
+    
+    if email_match:
+        sender_email = email_match.group(1).strip()
+        # Remove the email part from the original string to get the name
+        sender_name = sender_string.replace(f'<{sender_email}>', '').strip()
+    else:
+        # If no angle brackets, assume the whole thing is an email
+        sender_email = sender_string.strip()
+        sender_name = ""
+    
+    return sender_name, sender_email
 
 def extract_msg_details(msg_file: BytesIO) -> OutlookMessage:
     """
@@ -55,8 +81,11 @@ def extract_msg_details(msg_file: BytesIO) -> OutlookMessage:
                 
                 attachment_list.append(attachment_obj)
 
+        sender_name, sender_email = parse_sender(msg.sender)
+
         return OutlookMessage(
-            sender=msg.sender,
+            sender_name=sender_name,
+            sender_email=sender_email,
             body=msg.body.strip().replace("\n", " ").replace("\r", " "),
             attachments=attachment_list
         )

@@ -2,6 +2,7 @@ import logging
 from fastapi import APIRouter, HTTPException, UploadFile
 from io import BytesIO
 
+from machine_learning.models.model_results import ParsedEntity
 from machine_learning.schemas.inference_response import InferenceResponse, InferenceResponseData
 from machine_learning.utils.outlook_extractor import extract_msg_details
 from machine_learning.models.gliner_model import extract_entities
@@ -30,13 +31,26 @@ async def process_email(file: UploadFile) -> InferenceResponse:
         results = []
 
         extracted_entities = extract_entities(outlook_file.body)
-        results.append(
-            InferenceResponseData(
+
+        outlook_data = InferenceResponseData(
                 file_name=file.filename,
                 file_contents=outlook_file.body,
                 entities=extracted_entities.results
-            )
         )
+
+        if outlook_file.sender_name:
+          sender_name_exists = any(entity.entity == "Person" and entity.value == outlook_file.sender_name 
+                                          for entity in outlook_data.entities)
+          if not sender_name_exists:
+              outlook_data.entities.append(ParsedEntity(entity="Person", value=outlook_file.sender_name))
+              
+        if outlook_file.sender_email:
+            sender_email_exists = any(entity.entity == "Email" and entity.value == outlook_file.sender_email 
+                                     for entity in outlook_data.entities)
+            if not sender_email_exists:
+                outlook_data.entities.append(ParsedEntity(entity="Email", value=outlook_file.sender_email))
+        
+        results.append(outlook_data)
 
         for attachment in outlook_file.attachments:
             attachment_entities = extract_entities(attachment.file_contents)
