@@ -6,7 +6,7 @@ The University of Manitoba’s Donor Relations Department is responsible for mai
 
 ## Installation & Setup
 
-This assume that you have [Node.js](https://nodejs.org/en), [Python](https://www.python.org/), and [Poetry](https://python-poetry.org/) installed on the local machine.
+This assume that you have [Node.js](https://nodejs.org/en), [Python](https://www.python.org/), [TesseractOCR](https://github.com/tesseract-ocr/tesseract), and [Poetry](https://python-poetry.org/) installed on the local machine.
 
 1. Clone the repository  
    `git clone https://github.com/gift-intake/gift-intake.git`
